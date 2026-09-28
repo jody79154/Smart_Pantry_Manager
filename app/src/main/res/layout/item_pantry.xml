@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@color/pantry_surface"
+    android:paddingHorizontal="16dp"
+    android:paddingVertical="14dp">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/text_item_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/pantry_text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:text="Tomato" />
+
+        <TextView
+            android:id="@+id/text_item_quantity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/pantry_text_secondary"
+            android:textSize="14sp"
+            tools:text="4 item" />
+
+        <TextView
+            android:id="@+id/text_item_expiry"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/pantry_accent"
+            android:textSize="12sp"
+            android:visibility="gone"
+            tools:text="Expires in 2 days" />
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/button_edit_item"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_menu_edit"
+        android:contentDescription="@string/action_save" />
+
+    <ImageButton
+        android:id="@+id/button_delete_item"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_menu_delete"
+        android:contentDescription="@string/action_delete" />
+
+</LinearLayout>
