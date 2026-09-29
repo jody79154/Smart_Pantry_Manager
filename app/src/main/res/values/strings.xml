@@ -33,6 +33,8 @@
     <string name="error_item_not_found">This ingredient no longer exists</string>
     <string name="error_required_fields">Please fill in name, quantity and unit</string>
 
+    <string name="label_expires_on">Expires %1$s</string>
+
     <string name="dialog_delete_title">Delete ingredient?</string>
     <string name="dialog_delete_message">This will remove it from your pantry. This cannot be undone.</string>
 
