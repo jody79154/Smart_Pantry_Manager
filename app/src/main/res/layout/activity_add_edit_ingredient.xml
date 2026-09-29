@@ -91,6 +91,15 @@
                 android:backgroundTint="@color/pantry_primary"
                 android:text="@string/action_save" />
 
+            <Button
+                android:id="@+id/button_delete"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:backgroundTint="@color/pantry_error"
+                android:text="@string/action_delete"
+                android:visibility="gone" />
+
         </LinearLayout>
     </ScrollView>
 
