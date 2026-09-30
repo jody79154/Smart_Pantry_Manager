@@ -26,12 +26,7 @@
     <string name="action_delete">Delete</string>
     <string name="action_cancel">Cancel</string>
 
-    <string name="error_name_blank">Ingredient name cannot be blank</string>
-    <string name="error_quantity_invalid">Quantity must be a number greater than zero</string>
-    <string name="error_unit_required">Please select a unit</string>
-    <string name="error_expiry_invalid">Enter a valid date</string>
     <string name="error_item_not_found">This ingredient no longer exists</string>
-    <string name="error_required_fields">Please fill in name, quantity and unit</string>
 
     <string name="label_expires_on">Expires %1$s</string>
 
