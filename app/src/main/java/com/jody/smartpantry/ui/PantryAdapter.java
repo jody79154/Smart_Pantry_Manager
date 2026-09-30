@@ -8,6 +8,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.jody.smartpantry.R;
+import com.jody.smartpantry.data.SettingsRepository;
 import com.jody.smartpantry.model.PantryItem;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,7 +71,8 @@ public class PantryAdapter extends RecyclerView.Adapter<PantryAdapter.PantryView
             textName.setText(item.getName());
             textQuantity.setText(formatQuantity(item) + " " + item.getUnit());
 
-            if (item.hasExpiryDate()) {
+            boolean alertsEnabled = new SettingsRepository(itemView.getContext()).isExpiryAlertsEnabled();
+            if (item.hasExpiryDate() && alertsEnabled) {
                 textExpiry.setVisibility(View.VISIBLE);
                 textExpiry.setText(itemView.getContext().getString(R.string.label_expires_on, item.getExpiryDate()));
             } else {
