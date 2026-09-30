@@ -51,4 +51,6 @@
     <string name="setting_units_subtitle">Show quantities in grams and millilitres where possible</string>
 
     <string name="error_recipe_not_found">This recipe no longer exists</string>
+
+    <string name="error_database_generic">Something went wrong saving to the database. Please try again.</string>
 </resources>

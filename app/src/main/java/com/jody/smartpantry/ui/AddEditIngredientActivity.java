@@ -137,10 +137,18 @@ public class AddEditIngredientActivity extends AppCompatActivity {
         double quantity = Double.parseDouble(quantityText);
 
         if (itemId == NO_ITEM_ID) {
-            pantryDao.insert(name, quantity, unit, expiry);
+            long newId = pantryDao.insert(name, quantity, unit, expiry);
+            if (newId == -1L) {
+                Toast.makeText(this, R.string.error_database_generic, Toast.LENGTH_SHORT).show();
+                return;
+            }
             Toast.makeText(this, R.string.feedback_item_added, Toast.LENGTH_SHORT).show();
         } else {
-            pantryDao.update(itemId, name, quantity, unit, expiry);
+            int rowsUpdated = pantryDao.update(itemId, name, quantity, unit, expiry);
+            if (rowsUpdated == 0) {
+                Toast.makeText(this, R.string.error_database_generic, Toast.LENGTH_SHORT).show();
+                return;
+            }
             Toast.makeText(this, R.string.feedback_item_updated, Toast.LENGTH_SHORT).show();
         }
         finish();

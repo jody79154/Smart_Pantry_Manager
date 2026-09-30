@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import com.jody.smartpantry.model.PantryItem;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,54 +18,74 @@ public class PantryDao {
     }
 
     public long insert(String name, double quantity, String unit, String expiryDate) {
-        SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        ContentValues values = valuesFor(name, quantity, unit, expiryDate);
-        return db.insert(DatabaseHelper.TABLE_PANTRY_ITEMS, null, values);
+        try {
+            SQLiteDatabase db = databaseHelper.getWritableDatabase();
+            ContentValues values = valuesFor(name, quantity, unit, expiryDate);
+            return db.insert(DatabaseHelper.TABLE_PANTRY_ITEMS, null, values);
+        } catch (SQLiteException e) {
+            return -1L;
+        }
     }
 
     public int update(long id, String name, double quantity, String unit, String expiryDate) {
-        SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        ContentValues values = valuesFor(name, quantity, unit, expiryDate);
-        return db.update(
-                DatabaseHelper.TABLE_PANTRY_ITEMS,
-                values,
-                DatabaseHelper.COLUMN_PANTRY_ID + " = ?",
-                new String[]{String.valueOf(id)});
+        try {
+            SQLiteDatabase db = databaseHelper.getWritableDatabase();
+            ContentValues values = valuesFor(name, quantity, unit, expiryDate);
+            return db.update(
+                    DatabaseHelper.TABLE_PANTRY_ITEMS,
+                    values,
+                    DatabaseHelper.COLUMN_PANTRY_ID + " = ?",
+                    new String[]{String.valueOf(id)});
+        } catch (SQLiteException e) {
+            return 0;
+        }
     }
 
     public int delete(long id) {
-        SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        return db.delete(
-                DatabaseHelper.TABLE_PANTRY_ITEMS,
-                DatabaseHelper.COLUMN_PANTRY_ID + " = ?",
-                new String[]{String.valueOf(id)});
+        try {
+            SQLiteDatabase db = databaseHelper.getWritableDatabase();
+            return db.delete(
+                    DatabaseHelper.TABLE_PANTRY_ITEMS,
+                    DatabaseHelper.COLUMN_PANTRY_ID + " = ?",
+                    new String[]{String.valueOf(id)});
+        } catch (SQLiteException e) {
+            return 0;
+        }
     }
 
     public PantryItem findById(long id) {
-        SQLiteDatabase db = databaseHelper.getReadableDatabase();
-        try (Cursor cursor = db.query(
-                DatabaseHelper.TABLE_PANTRY_ITEMS,
-                null,
-                DatabaseHelper.COLUMN_PANTRY_ID + " = ?",
-                new String[]{String.valueOf(id)},
-                null, null, null)) {
-            if (cursor.moveToFirst()) {
-                return itemFrom(cursor);
+        try {
+            SQLiteDatabase db = databaseHelper.getReadableDatabase();
+            try (Cursor cursor = db.query(
+                    DatabaseHelper.TABLE_PANTRY_ITEMS,
+                    null,
+                    DatabaseHelper.COLUMN_PANTRY_ID + " = ?",
+                    new String[]{String.valueOf(id)},
+                    null, null, null)) {
+                if (cursor.moveToFirst()) {
+                    return itemFrom(cursor);
+                }
+                return null;
             }
+        } catch (SQLiteException e) {
             return null;
         }
     }
 
     public List<PantryItem> findAll() {
         List<PantryItem> items = new ArrayList<>();
-        SQLiteDatabase db = databaseHelper.getReadableDatabase();
-        try (Cursor cursor = db.query(
-                DatabaseHelper.TABLE_PANTRY_ITEMS,
-                null, null, null, null, null,
-                DatabaseHelper.COLUMN_PANTRY_NAME + " COLLATE NOCASE ASC")) {
-            while (cursor.moveToNext()) {
-                items.add(itemFrom(cursor));
+        try {
+            SQLiteDatabase db = databaseHelper.getReadableDatabase();
+            try (Cursor cursor = db.query(
+                    DatabaseHelper.TABLE_PANTRY_ITEMS,
+                    null, null, null, null, null,
+                    DatabaseHelper.COLUMN_PANTRY_NAME + " COLLATE NOCASE ASC")) {
+                while (cursor.moveToNext()) {
+                    items.add(itemFrom(cursor));
+                }
             }
+        } catch (SQLiteException e) {
+            return new ArrayList<>();
         }
         return items;
     }
@@ -92,3 +113,4 @@ public class PantryDao {
         return new PantryItem(id, name, quantity, unit, expiryDate);
     }
 }
+

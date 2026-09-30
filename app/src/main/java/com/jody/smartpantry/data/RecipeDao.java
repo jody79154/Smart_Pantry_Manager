@@ -3,6 +3,7 @@ package com.jody.smartpantry.data;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import com.jody.smartpantry.model.Recipe;
 import com.jody.smartpantry.model.RecipeIngredient;
 import java.util.ArrayList;
@@ -18,35 +19,43 @@ public class RecipeDao {
 
     public List<Recipe> findAll() {
         List<Recipe> recipes = new ArrayList<>();
-        SQLiteDatabase db = databaseHelper.getReadableDatabase();
-        try (Cursor cursor = db.query(
-                DatabaseHelper.TABLE_RECIPES,
-                null, null, null, null, null,
-                DatabaseHelper.COLUMN_RECIPE_NAME + " COLLATE NOCASE ASC")) {
-            while (cursor.moveToNext()) {
-                long id = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_RECIPE_ID));
-                String name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_RECIPE_NAME));
-                String steps = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_RECIPE_STEPS));
-                recipes.add(new Recipe(id, name, steps, findIngredients(db, id)));
+        try {
+            SQLiteDatabase db = databaseHelper.getReadableDatabase();
+            try (Cursor cursor = db.query(
+                    DatabaseHelper.TABLE_RECIPES,
+                    null, null, null, null, null,
+                    DatabaseHelper.COLUMN_RECIPE_NAME + " COLLATE NOCASE ASC")) {
+                while (cursor.moveToNext()) {
+                    long id = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_RECIPE_ID));
+                    String name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_RECIPE_NAME));
+                    String steps = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_RECIPE_STEPS));
+                    recipes.add(new Recipe(id, name, steps, findIngredients(db, id)));
+                }
             }
+        } catch (SQLiteException e) {
+            return new ArrayList<>();
         }
         return recipes;
     }
 
     public Recipe findById(long recipeId) {
-        SQLiteDatabase db = databaseHelper.getReadableDatabase();
-        try (Cursor cursor = db.query(
-                DatabaseHelper.TABLE_RECIPES,
-                null,
-                DatabaseHelper.COLUMN_RECIPE_ID + " = ?",
-                new String[]{String.valueOf(recipeId)},
-                null, null, null)) {
-            if (!cursor.moveToFirst()) {
-                return null;
+        try {
+            SQLiteDatabase db = databaseHelper.getReadableDatabase();
+            try (Cursor cursor = db.query(
+                    DatabaseHelper.TABLE_RECIPES,
+                    null,
+                    DatabaseHelper.COLUMN_RECIPE_ID + " = ?",
+                    new String[]{String.valueOf(recipeId)},
+                    null, null, null)) {
+                if (!cursor.moveToFirst()) {
+                    return null;
+                }
+                String name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_RECIPE_NAME));
+                String steps = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_RECIPE_STEPS));
+                return new Recipe(recipeId, name, steps, findIngredients(db, recipeId));
             }
-            String name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_RECIPE_NAME));
-            String steps = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_RECIPE_STEPS));
-            return new Recipe(recipeId, name, steps, findIngredients(db, recipeId));
+        } catch (SQLiteException e) {
+            return null;
         }
     }
 
