@@ -49,4 +49,6 @@
     <string name="setting_expiry_alerts_subtitle">Highlight pantry items nearing their expiry date</string>
     <string name="setting_units_title">Prefer metric units</string>
     <string name="setting_units_subtitle">Show quantities in grams and millilitres where possible</string>
+
+    <string name="error_recipe_not_found">This recipe no longer exists</string>
 </resources>
