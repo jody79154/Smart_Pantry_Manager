@@ -10,8 +10,10 @@ import androidx.appcompat.widget.Toolbar;
 import android.widget.AutoCompleteTextView;
 import android.widget.ArrayAdapter;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.jody.smartpantry.R;
 import com.jody.smartpantry.data.PantryDao;
+import com.jody.smartpantry.logic.IngredientValidator;
 import com.jody.smartpantry.model.PantryItem;
 
 public class AddEditIngredientActivity extends AppCompatActivity {
@@ -41,6 +43,11 @@ public class AddEditIngredientActivity extends AppCompatActivity {
     private AutoCompleteTextView inputUnit;
     private TextInputEditText inputExpiry;
 
+    private TextInputLayout layoutName;
+    private TextInputLayout layoutQuantity;
+    private TextInputLayout layoutUnit;
+    private TextInputLayout layoutExpiry;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,6 +65,11 @@ public class AddEditIngredientActivity extends AppCompatActivity {
         inputQuantity = findViewById(R.id.input_quantity);
         inputUnit = findViewById(R.id.input_unit);
         inputExpiry = findViewById(R.id.input_expiry);
+
+        layoutName = findViewById(R.id.layout_name);
+        layoutQuantity = findViewById(R.id.layout_quantity);
+        layoutUnit = findViewById(R.id.layout_unit);
+        layoutExpiry = findViewById(R.id.layout_expiry);
 
         inputUnit.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, UNIT_OPTIONS));
 
@@ -107,23 +119,22 @@ public class AddEditIngredientActivity extends AppCompatActivity {
     }
 
     private void onSaveClicked() {
+        clearErrors();
+
         String name = textOf(inputName);
         String quantityText = textOf(inputQuantity);
         String unit = textOf(inputUnit);
         String expiry = textOf(inputExpiry);
 
-        if (name.isEmpty() || quantityText.isEmpty() || unit.isEmpty()) {
-            Toast.makeText(this, R.string.error_required_fields, Toast.LENGTH_SHORT).show();
+        IngredientValidator.ValidationResult result =
+                IngredientValidator.validate(name, quantityText, unit, expiry);
+
+        if (!result.isValid()) {
+            showErrors(result);
             return;
         }
 
-        double quantity;
-        try {
-            quantity = Double.parseDouble(quantityText);
-        } catch (NumberFormatException e) {
-            Toast.makeText(this, R.string.error_quantity_invalid, Toast.LENGTH_SHORT).show();
-            return;
-        }
+        double quantity = Double.parseDouble(quantityText);
 
         if (itemId == NO_ITEM_ID) {
             pantryDao.insert(name, quantity, unit, expiry);
@@ -133,6 +144,20 @@ public class AddEditIngredientActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.feedback_item_updated, Toast.LENGTH_SHORT).show();
         }
         finish();
+    }
+
+    private void clearErrors() {
+        layoutName.setError(null);
+        layoutQuantity.setError(null);
+        layoutUnit.setError(null);
+        layoutExpiry.setError(null);
+    }
+
+    private void showErrors(IngredientValidator.ValidationResult result) {
+        layoutName.setError(result.getNameError());
+        layoutQuantity.setError(result.getQuantityError());
+        layoutUnit.setError(result.getUnitError());
+        layoutExpiry.setError(result.getExpiryError());
     }
 
     private String textOf(android.widget.TextView view) {
