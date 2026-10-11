@@ -43,6 +43,11 @@
     <string name="helper_expiry">Format: yyyy-MM-dd</string>
     <string name="cd_pick_date">Pick expiry date</string>
     <string name="action_save">Save</string>
+    <string name="unit_placeholder">Select unit</string>
+    <string name="item_added">%1$s added to your pantry</string>
+    <string name="item_updated">%1$s updated</string>
+    <string name="item_missing">That ingredient no longer exists</string>
+    <string name="error_save">Could not save the ingredient. Please try again.</string>
 
     <!-- Suggested recipes screen -->
     <string name="empty_recipes_message">No recipes match your pantry yet—add more ingredients.</string>
