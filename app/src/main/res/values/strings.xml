@@ -23,6 +23,18 @@
     <string name="cd_edit_ingredient">Edit ingredient</string>
     <string name="cd_delete_ingredient">Delete ingredient</string>
 
+    <!-- Pantry list actions -->
+    <string name="expires_on">Expires: %1$s</string>
+    <string name="cd_edit_item">Edit %1$s</string>
+    <string name="cd_delete_item">Delete %1$s</string>
+    <string name="delete_title">Delete ingredient?</string>
+    <string name="delete_message">Remove %1$s from your pantry?</string>
+    <string name="delete_confirm">Delete</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="item_deleted">%1$s deleted</string>
+    <string name="item_already_deleted">%1$s was already deleted</string>
+    <string name="error_database">Something went wrong while accessing your pantry. Please try again.</string>
+
     <!-- Ingredient form -->
     <string name="hint_name">Ingredient name</string>
     <string name="hint_quantity">Quantity</string>
