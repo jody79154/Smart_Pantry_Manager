@@ -1,0 +1,38 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local configuration
+local.properties
+*.properties.local
+
+# Signing and credentials
+*.jks
+*.keystore
+keystore.properties
+google-services.json
+.env
+*.pem
+*.token
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Android generated
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Packaging output
+*.zip
+out/
