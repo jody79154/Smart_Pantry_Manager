@@ -73,6 +73,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(CREATE_RECIPES);
         db.execSQL(CREATE_RECIPE_INGREDIENTS);
         db.execSQL(CREATE_RECIPE_INGREDIENTS_INDEX);
+        RecipeSeeder.seed(db);
     }
 
     @Override
