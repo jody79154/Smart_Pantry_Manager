@@ -1,0 +1,245 @@
+package com.example.smartpantry.matching;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import com.example.smartpantry.data.RecipeCatalog;
+import com.example.smartpantry.model.PantryItem;
+import com.example.smartpantry.model.Recipe;
+import com.example.smartpantry.model.RecipeIngredient;
+
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class RecipeMatcherTest {
+
+    private static PantryItem pantry(String name, double quantity, String unit) {
+        return new PantryItem(0, name, quantity, unit, null);
+    }
+
+    private static RecipeIngredient need(String name, double quantity, String unit) {
+        return new RecipeIngredient(name, quantity, unit);
+    }
+
+    private static Recipe recipe(String name, RecipeIngredient... ingredients) {
+        return new Recipe(0, name, "1. Mix.\n2. Cook.\n3. Serve.", Arrays.asList(ingredients));
+    }
+
+    private static List<PantryItem> pantryOf(PantryItem... items) {
+        return new ArrayList<>(Arrays.asList(items));
+    }
+
+    private static Recipe catalogRecipe(String name) {
+        for (Recipe recipe : RecipeCatalog.all()) {
+            if (recipe.getName().equals(name)) {
+                return recipe;
+            }
+        }
+        throw new AssertionError("Missing catalog recipe: " + name);
+    }
+
+    @Test
+    public void exactCompleteMatchIsSuggested() {
+        Recipe pancakes = recipe("Pancakes", need("flour", 200, "g"), need("milk", 300, "ml"), need("egg", 2, "item"));
+        List<PantryItem> items = pantryOf(pantry("flour", 200, "g"), pantry("milk", 300, "ml"), pantry("egg", 2, "item"));
+        assertTrue(RecipeMatcher.canMake(pancakes, items));
+        assertEquals(1, RecipeMatcher.findMakeable(Arrays.asList(pancakes), items).size());
+    }
+
+    @Test
+    public void oneMissingIngredientRejectsTheRecipe() {
+        Recipe pancakes = recipe("Pancakes", need("flour", 200, "g"), need("milk", 300, "ml"), need("egg", 2, "item"));
+        List<PantryItem> items = pantryOf(pantry("flour", 500, "g"), pantry("milk", 1, "l"));
+        assertFalse(RecipeMatcher.canMake(pancakes, items));
+        assertTrue(RecipeMatcher.findMakeable(Arrays.asList(pancakes), items).isEmpty());
+    }
+
+    @Test
+    public void insufficientQuantityRejectsTheRecipe() {
+        Recipe omelette = recipe("Omelette", need("egg", 3, "item"), need("cheese", 50, "g"));
+        assertFalse(RecipeMatcher.canMake(omelette, pantryOf(pantry("egg", 2, "item"), pantry("cheese", 50, "g"))));
+        assertFalse(RecipeMatcher.canMake(omelette, pantryOf(pantry("egg", 3, "item"), pantry("cheese", 49.9, "g"))));
+    }
+
+    @Test
+    public void pantryQuantityGreaterThanRequiredIsAccepted() {
+        Recipe omelette = recipe("Omelette", need("egg", 3, "item"), need("cheese", 50, "g"));
+        assertTrue(RecipeMatcher.canMake(omelette, pantryOf(pantry("egg", 12, "item"), pantry("cheese", 500, "g"))));
+    }
+
+    @Test
+    public void caseDifferencesAreIgnored() {
+        Recipe omelette = recipe("Omelette", need("Egg", 3, "item"), need("CHEESE", 50, "g"));
+        assertTrue(RecipeMatcher.canMake(omelette, pantryOf(pantry("eGG", 3, "ITEM"), pantry("cheese", 50, "G"))));
+    }
+
+    @Test
+    public void extraWhitespaceIsIgnored() {
+        Recipe pasta = recipe("Pasta", need("olive oil", 2, "tbsp"), need("spaghetti", 200, "g"));
+        List<PantryItem> items = pantryOf(pantry("   Olive    Oil  ", 2, " tbsp "), pantry("\tspaghetti ", 200, "g"));
+        assertTrue(RecipeMatcher.canMake(pasta, items));
+    }
+
+    @Test
+    public void singularAndPluralNamesMatchEachWay() {
+        Recipe salad = recipe("Salad", need("tomato", 2, "item"), need("onion", 1, "item"));
+        assertTrue(RecipeMatcher.canMake(salad, pantryOf(pantry("tomatoes", 2, "item"), pantry("onions", 1, "item"))));
+
+        Recipe salsa = recipe("Salsa", need("tomatoes", 2, "item"), need("onions", 1, "item"));
+        assertTrue(RecipeMatcher.canMake(salsa, pantryOf(pantry("tomato", 2, "item"), pantry("onion", 1, "item"))));
+    }
+
+    @Test
+    public void compatibleUnitsAreConvertedBeforeComparing() {
+        Recipe cake = recipe("Cake", need("flour", 500, "g"), need("milk", 250, "ml"), need("oil", 1, "tbsp"));
+        assertTrue(RecipeMatcher.canMake(cake, pantryOf(pantry("flour", 0.5, "kg"), pantry("milk", 0.25, "l"), pantry("oil", 3, "tsp"))));
+        assertTrue(RecipeMatcher.canMake(cake, pantryOf(pantry("flour", 1, "kg"), pantry("milk", 2, "cup"), pantry("oil", 15, "ml"))));
+        assertFalse(RecipeMatcher.canMake(cake, pantryOf(pantry("flour", 0.4, "kg"), pantry("milk", 2, "cup"), pantry("oil", 15, "ml"))));
+        assertFalse(RecipeMatcher.canMake(cake, pantryOf(pantry("flour", 1, "kg"), pantry("milk", 2, "cup"), pantry("oil", 2, "tsp"))));
+        assertFalse(RecipeMatcher.canMake(cake, pantryOf(pantry("flour", 1, "kg"), pantry("milk", 1, "cup"), pantry("oil", 15, "ml"))));
+
+        Recipe toast = recipe("Toast", need("bread", 2, "item"));
+        assertTrue(RecipeMatcher.canMake(toast, pantryOf(pantry("bread", 2, "piece"))));
+        assertTrue(RecipeMatcher.canMake(toast, pantryOf(pantry("bread", 2, "whole"))));
+    }
+
+    @Test
+    public void incompatibleUnitCategoriesAreRejected() {
+        Recipe mash = recipe("Mash", need("potato", 800, "g"));
+        assertFalse(RecipeMatcher.canMake(mash, pantryOf(pantry("potato", 1000, "ml"))));
+        assertFalse(RecipeMatcher.canMake(mash, pantryOf(pantry("potato", 10, "item"))));
+
+        Recipe soup = recipe("Soup", need("stock", 500, "ml"));
+        assertFalse(RecipeMatcher.canMake(soup, pantryOf(pantry("stock", 1, "kg"))));
+        assertFalse(RecipeMatcher.canMake(soup, pantryOf(pantry("stock", 3, "item"))));
+    }
+
+    @Test
+    public void duplicatePantryEntriesAreCombined() {
+        Recipe omelette = recipe("Omelette", need("egg", 3, "item"));
+        assertFalse(RecipeMatcher.canMake(omelette, pantryOf(pantry("egg", 2, "item"))));
+        assertTrue(RecipeMatcher.canMake(omelette, pantryOf(pantry("egg", 1, "item"), pantry("eggs", 2, "item"))));
+
+        Recipe bread = recipe("Bread", need("flour", 1, "kg"));
+        assertTrue(RecipeMatcher.canMake(bread, pantryOf(pantry("flour", 600, "g"), pantry("Flour", 0.4, "kg"))));
+    }
+
+    @Test
+    public void emptyPantryMatchesNothing() {
+        Recipe toast = recipe("Toast", need("bread", 1, "item"));
+        assertFalse(RecipeMatcher.canMake(toast, new ArrayList<>()));
+        assertTrue(RecipeMatcher.findMakeable(RecipeCatalog.all(), new ArrayList<>()).isEmpty());
+        assertTrue(RecipeMatcher.findMakeable(RecipeCatalog.all(), null).isEmpty());
+    }
+
+    @Test
+    public void multipleIngredientRecipeNeedsEveryIngredient() {
+        Recipe stew = recipe("Stew",
+                need("beef", 500, "g"), need("onion", 2, "item"), need("carrot", 3, "item"),
+                need("stock", 500, "ml"), need("salt", 1, "tsp"));
+        List<PantryItem> items = pantryOf(pantry("beef", 500, "g"), pantry("onion", 2, "item"),
+                pantry("carrot", 3, "item"), pantry("stock", 500, "ml"));
+        assertFalse(RecipeMatcher.canMake(stew, items));
+
+        items.add(pantry("salt", 1, "tsp"));
+        assertTrue(RecipeMatcher.canMake(stew, items));
+
+        items.remove(0);
+        assertFalse(RecipeMatcher.canMake(stew, items));
+    }
+
+    @Test
+    public void decimalQuantitiesAreSupported() {
+        Recipe guacamole = recipe("Guacamole", need("onion", 0.5, "item"), need("salt", 0.5, "tsp"));
+        assertTrue(RecipeMatcher.canMake(guacamole, pantryOf(pantry("onion", 0.5, "item"), pantry("salt", 0.5, "tsp"))));
+        assertTrue(RecipeMatcher.canMake(guacamole, pantryOf(pantry("onion", 1.25, "item"), pantry("salt", 2.5, "tsp"))));
+        assertFalse(RecipeMatcher.canMake(guacamole, pantryOf(pantry("onion", 0.4, "item"), pantry("salt", 0.5, "tsp"))));
+    }
+
+    @Test
+    public void documentedAliasesCountAsTheSameIngredient() {
+        Recipe stirFry = recipe("Stir fry", need("spring onion", 2, "item"), need("bell pepper", 1, "item"),
+                need("vegetable oil", 1, "tbsp"));
+        List<PantryItem> items = pantryOf(pantry("Scallions", 2, "item"), pantry("capsicum", 1, "item"),
+                pantry("sunflower oil", 1, "tbsp"));
+        assertTrue(RecipeMatcher.canMake(stirFry, items));
+    }
+
+    @Test
+    public void ingredientListedTwiceInARecipeCannotDoubleCountThePantry() {
+        Recipe doubled = recipe("Doubled", need("flour", 100, "g"), need("flours", 100, "g"));
+        assertFalse(RecipeMatcher.canMake(doubled, pantryOf(pantry("flour", 150, "g"))));
+        assertTrue(RecipeMatcher.canMake(doubled, pantryOf(pantry("flour", 200, "g"))));
+    }
+
+    @Test
+    public void recipeWithNoIngredientsIsNeverSuggested() {
+        assertFalse(RecipeMatcher.canMake(recipe("Nothing"), pantryOf(pantry("flour", 1, "kg"))));
+    }
+
+    @Test
+    public void unusablePantryRowsAreIgnored() {
+        Recipe toast = recipe("Toast", need("bread", 2, "item"));
+        assertFalse(RecipeMatcher.canMake(toast, pantryOf(pantry("bread", 2, "bananas"))));
+        assertFalse(RecipeMatcher.canMake(toast, pantryOf(pantry("bread", 0, "item"))));
+        assertFalse(RecipeMatcher.canMake(toast, pantryOf(pantry("   ", 2, "item"))));
+    }
+
+    @Test
+    public void floatingPointRoundingDoesNotRejectAnExactAmount() {
+        Recipe halfSet = recipe("Half set", need("lime", 0.8, "item"));
+        assertTrue(RecipeMatcher.canMake(halfSet, pantryOf(pantry("lime", 0.1, "item"), pantry("lime", 0.7, "item"))));
+        assertFalse(RecipeMatcher.canMake(halfSet, pantryOf(pantry("lime", 0.1, "item"), pantry("lime", 0.6, "item"))));
+    }
+
+    @Test
+    public void findMakeableKeepsOnlyQualifyingRecipesInOriginalOrder() {
+        Recipe toast = recipe("Toast", need("bread", 2, "item"));
+        Recipe omelette = recipe("Omelette", need("egg", 3, "item"));
+        Recipe eggToast = recipe("Egg toast", need("egg", 1, "item"), need("bread", 1, "item"));
+        List<PantryItem> items = pantryOf(pantry("bread", 2, "item"), pantry("egg", 1, "item"));
+
+        List<Recipe> result = RecipeMatcher.findMakeable(Arrays.asList(toast, omelette, eggToast), items);
+        assertEquals(2, result.size());
+        assertEquals("Toast", result.get(0).getName());
+        assertEquals("Egg toast", result.get(1).getName());
+    }
+
+    @Test
+    public void catalogRecipeWithFourOfFiveIngredientsIsNotSuggested() {
+        Recipe pasta = catalogRecipe("Tomato Pasta");
+        assertEquals(5, pasta.getIngredients().size());
+
+        List<PantryItem> items = pantryOf(pantry("spaghetti", 200, "g"), pantry("canned tomatoes", 400, "g"),
+                pantry("garlic", 2, "item"), pantry("olive oil", 2, "tbsp"));
+        assertFalse(RecipeMatcher.canMake(pasta, items));
+        assertFalse(containsName(RecipeMatcher.findMakeable(RecipeCatalog.all(), items), "Tomato Pasta"));
+
+        items.add(pantry("salt", 1, "tsp"));
+        assertTrue(containsName(RecipeMatcher.findMakeable(RecipeCatalog.all(), items), "Tomato Pasta"));
+
+        items.remove(items.size() - 1);
+        assertFalse(containsName(RecipeMatcher.findMakeable(RecipeCatalog.all(), items), "Tomato Pasta"));
+    }
+
+    @Test
+    public void potatoesCountedInItemsDoNotUnlockTheRecipeNeedingGrams() {
+        List<PantryItem> items = pantryOf(pantry("potato", 10, "item"), pantry("milk", 1, "cup"),
+                pantry("butter", 100, "g"), pantry("salt", 2, "tsp"));
+        List<Recipe> result = RecipeMatcher.findMakeable(RecipeCatalog.all(), items);
+        assertFalse(containsName(result, "Mashed Potatoes"));
+    }
+
+    private static boolean containsName(List<Recipe> recipes, String name) {
+        for (Recipe recipe : recipes) {
+            if (recipe.getName().equals(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
