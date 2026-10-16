@@ -52,7 +52,17 @@
     <!-- Suggested recipes screen -->
     <string name="empty_recipes_message">No recipes match your pantry yet—add more ingredients.</string>
 
+    <plurals name="recipes_ready">
+        <item quantity="one">%d recipe you can cook right now</item>
+        <item quantity="other">%d recipes you can cook right now</item>
+    </plurals>
+    <plurals name="ingredient_count">
+        <item quantity="one">%d ingredient</item>
+        <item quantity="other">%d ingredients</item>
+    </plurals>
+
     <!-- Recipe detail screen -->
+    <string name="recipe_missing">That recipe could not be found</string>
     <string name="label_ingredients">Ingredients</string>
     <string name="label_method">Method</string>
 
