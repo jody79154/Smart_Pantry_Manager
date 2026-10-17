@@ -1,5 +1,7 @@
 package com.example.smartpantry.ui;
 
+import android.content.Context;
+import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -7,12 +9,15 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.smartpantry.R;
 import com.example.smartpantry.model.PantryItem;
+import com.example.smartpantry.util.ExpiryHelper;
 import com.example.smartpantry.util.QuantityFormatter;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,9 +31,16 @@ public class PantryAdapter extends RecyclerView.Adapter<PantryAdapter.PantryView
 
     private final List<PantryItem> items = new ArrayList<>();
     private final Listener listener;
+    private boolean expiryAlertsEnabled = true;
+    private int warningDays = ExpiryHelper.DEFAULT_WARNING_DAYS;
 
     public PantryAdapter(Listener listener) {
         this.listener = listener;
+    }
+
+    public void setExpiryAlerts(boolean enabled, int days) {
+        this.expiryAlertsEnabled = enabled;
+        this.warningDays = days;
     }
 
     public void setItems(List<PantryItem> newItems) {
@@ -50,13 +62,7 @@ public class PantryAdapter extends RecyclerView.Adapter<PantryAdapter.PantryView
         holder.name.setText(item.getName());
         holder.quantity.setText(QuantityFormatter.format(item.getQuantity()) + " " + item.getUnit());
 
-        if (item.getExpiryDate() == null) {
-            holder.expiry.setVisibility(View.GONE);
-        } else {
-            holder.expiry.setText(holder.itemView.getContext()
-                    .getString(R.string.expires_on, item.getExpiryDate()));
-            holder.expiry.setVisibility(View.VISIBLE);
-        }
+        bindExpiry(holder, item);
 
         holder.edit.setContentDescription(holder.itemView.getContext()
                 .getString(R.string.cd_edit_item, item.getName()));
@@ -77,6 +83,42 @@ public class PantryAdapter extends RecyclerView.Adapter<PantryAdapter.PantryView
                 listener.onDelete(items.get(adapterPosition));
             }
         });
+    }
+
+    private void bindExpiry(PantryViewHolder holder, PantryItem item) {
+        String date = item.getExpiryDate();
+        if (date == null) {
+            holder.expiry.setVisibility(View.GONE);
+            return;
+        }
+
+        Context context = holder.itemView.getContext();
+        String text = context.getString(R.string.expires_on, date);
+        int color = R.color.text_secondary;
+        boolean flagged = false;
+
+        if (expiryAlertsEnabled) {
+            LocalDate today = LocalDate.now();
+            Integer days = ExpiryHelper.daysUntil(date, today);
+            ExpiryHelper.Status status = ExpiryHelper.statusOf(date, today, warningDays);
+            if (status == ExpiryHelper.Status.EXPIRED && days != null) {
+                int ago = -days;
+                text = context.getResources().getQuantityString(R.plurals.expired_days_ago, ago, ago, date);
+                color = R.color.error;
+                flagged = true;
+            } else if (status == ExpiryHelper.Status.EXPIRING_SOON && days != null) {
+                text = days == 0
+                        ? context.getString(R.string.expires_today, date)
+                        : context.getResources().getQuantityString(R.plurals.expires_in_days, days, days, date);
+                color = R.color.warning;
+                flagged = true;
+            }
+        }
+
+        holder.expiry.setText(text);
+        holder.expiry.setTextColor(ContextCompat.getColor(context, color));
+        holder.expiry.setTypeface(null, flagged ? Typeface.BOLD : Typeface.NORMAL);
+        holder.expiry.setVisibility(View.VISIBLE);
     }
 
     @Override

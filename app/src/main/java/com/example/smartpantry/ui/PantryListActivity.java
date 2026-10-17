@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.smartpantry.R;
 import com.example.smartpantry.data.PantryDao;
 import com.example.smartpantry.model.PantryItem;
+import com.example.smartpantry.util.SettingsStore;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
@@ -23,6 +24,7 @@ import java.util.List;
 public class PantryListActivity extends AppCompatActivity implements PantryAdapter.Listener {
 
     private PantryDao pantryDao;
+    private SettingsStore settings;
     private PantryAdapter adapter;
     private RecyclerView recyclerView;
     private View emptyState;
@@ -34,6 +36,7 @@ public class PantryListActivity extends AppCompatActivity implements PantryAdapt
         setContentView(R.layout.activity_pantry_list);
 
         pantryDao = new PantryDao(this);
+        settings = new SettingsStore(this);
         recyclerView = findViewById(R.id.pantryRecycler);
         emptyState = findViewById(R.id.emptyState);
         bottomNav = findViewById(R.id.bottomNav);
@@ -53,6 +56,7 @@ public class PantryListActivity extends AppCompatActivity implements PantryAdapt
     protected void onResume() {
         super.onResume();
         bottomNav.setSelectedItemId(R.id.nav_pantry);
+        adapter.setExpiryAlerts(settings.isExpiryAlertsEnabled(), settings.getExpiryWarningDays());
         loadItems();
     }
 

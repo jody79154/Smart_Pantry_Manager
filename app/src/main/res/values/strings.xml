@@ -25,6 +25,15 @@
 
     <!-- Pantry list actions -->
     <string name="expires_on">Expires: %1$s</string>
+    <string name="expires_today">Expires today (%1$s)</string>
+    <plurals name="expires_in_days">
+        <item quantity="one">Expires in %1$d day (%2$s)</item>
+        <item quantity="other">Expires in %1$d days (%2$s)</item>
+    </plurals>
+    <plurals name="expired_days_ago">
+        <item quantity="one">Expired %1$d day ago (%2$s)</item>
+        <item quantity="other">Expired %1$d days ago (%2$s)</item>
+    </plurals>
     <string name="cd_edit_item">Edit %1$s</string>
     <string name="cd_delete_item">Delete %1$s</string>
     <string name="delete_title">Delete ingredient?</string>
