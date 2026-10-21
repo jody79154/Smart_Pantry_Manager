@@ -45,6 +45,7 @@ public class AddEditIngredientActivity extends AppCompatActivity {
     private TextInputEditText etExpiry;
     private Spinner spinnerUnit;
     private TextView tvUnitError;
+    private View btnSave;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +65,8 @@ public class AddEditIngredientActivity extends AppCompatActivity {
         layoutExpiry.setEndIconOnClickListener(v -> showDatePicker());
 
         // Save button
-        findViewById(R.id.btnSave).setOnClickListener(v -> saveIngredient());
+        btnSave = findViewById(R.id.btnSave);
+        btnSave.setOnClickListener(v -> saveIngredient());
 
         itemId = getIntent().getLongExtra(EXTRA_ITEM_ID, NO_ID);
         if (itemId != NO_ID) {
@@ -158,10 +160,12 @@ public class AddEditIngredientActivity extends AppCompatActivity {
                 unit,
                 InputValidator.normalizeExpiry(rawExpiry));
 
+        btnSave.setEnabled(false);
         try {
             if (itemId == NO_ID) {
                 if (pantryDao.insert(item) == -1) {
                     Toast.makeText(this, R.string.error_save, Toast.LENGTH_LONG).show();
+                    btnSave.setEnabled(true);
                     return;
                 }
                 Toast.makeText(this, getString(R.string.item_added, name), Toast.LENGTH_SHORT).show();
@@ -175,6 +179,7 @@ public class AddEditIngredientActivity extends AppCompatActivity {
             }
         } catch (SQLiteException e) {
             Toast.makeText(this, R.string.error_save, Toast.LENGTH_LONG).show();
+            btnSave.setEnabled(true);
             return;
         }
         finish();

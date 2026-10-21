@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -29,6 +30,7 @@ public class PantryListActivity extends AppCompatActivity implements PantryAdapt
     private RecyclerView recyclerView;
     private View emptyState;
     private BottomNavigationView bottomNav;
+    private AlertDialog deleteDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +63,14 @@ public class PantryListActivity extends AppCompatActivity implements PantryAdapt
     }
 
     @Override
+    protected void onDestroy() {
+        if (deleteDialog != null && deleteDialog.isShowing()) {
+            deleteDialog.dismiss();
+        }
+        super.onDestroy();
+    }
+
+    @Override
     public void onEdit(PantryItem item) {
         Intent intent = new Intent(this, AddEditIngredientActivity.class);
         intent.putExtra(AddEditIngredientActivity.EXTRA_ITEM_ID, item.getId());
@@ -69,7 +79,7 @@ public class PantryListActivity extends AppCompatActivity implements PantryAdapt
 
     @Override
     public void onDelete(PantryItem item) {
-        new MaterialAlertDialogBuilder(this)
+        deleteDialog = new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.delete_title)
                 .setMessage(getString(R.string.delete_message, item.getName()))
                 .setPositiveButton(R.string.delete_confirm, (dialog, which) -> deleteItem(item))

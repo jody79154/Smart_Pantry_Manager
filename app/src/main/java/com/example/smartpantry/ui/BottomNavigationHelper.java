@@ -22,6 +22,9 @@ public final class BottomNavigationHelper {
                 Intent intent = new Intent(activity, PantryListActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 activity.startActivity(intent);
+                if (selectedId != R.id.nav_pantry) {
+                    activity.finish();
+                }
                 return true;
             }
             Class<?> target = id == R.id.nav_suggestions

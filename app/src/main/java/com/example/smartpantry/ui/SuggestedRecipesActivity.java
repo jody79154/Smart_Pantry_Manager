@@ -30,6 +30,7 @@ public class SuggestedRecipesActivity extends AppCompatActivity implements Recip
     private RecyclerView recyclerView;
     private View emptyState;
     private TextView tvSummary;
+    private TextView tvEmptyHint;
     private BottomNavigationView bottomNav;
 
     @Override
@@ -42,6 +43,7 @@ public class SuggestedRecipesActivity extends AppCompatActivity implements Recip
         recyclerView = findViewById(R.id.recipeRecycler);
         emptyState = findViewById(R.id.emptyState);
         tvSummary = findViewById(R.id.tvSummary);
+        tvEmptyHint = findViewById(R.id.tvEmptyHint);
         bottomNav = findViewById(R.id.bottomNav);
 
         adapter = new RecipeAdapter(this);
@@ -67,8 +69,10 @@ public class SuggestedRecipesActivity extends AppCompatActivity implements Recip
 
     private void loadSuggestions() {
         List<Recipe> suggested;
+        boolean pantryEmpty = true;
         try {
             List<PantryItem> pantry = pantryDao.getAll();
+            pantryEmpty = pantry.isEmpty();
             suggested = RecipeMatcher.findMakeable(recipeDao.getAll(), pantry);
         } catch (SQLiteException e) {
             suggested = new ArrayList<>();
@@ -80,6 +84,7 @@ public class SuggestedRecipesActivity extends AppCompatActivity implements Recip
         emptyState.setVisibility(empty ? View.VISIBLE : View.GONE);
         recyclerView.setVisibility(empty ? View.GONE : View.VISIBLE);
         tvSummary.setVisibility(empty ? View.GONE : View.VISIBLE);
+        tvEmptyHint.setText(pantryEmpty ? R.string.empty_recipes_hint_no_pantry : R.string.empty_recipes_hint_no_match);
         if (!empty) {
             tvSummary.setText(getResources().getQuantityString(
                     R.plurals.recipes_ready, suggested.size(), suggested.size()));

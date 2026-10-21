@@ -12,6 +12,6 @@ public final class QuantityFormatter {
     }
 
     public static String format(double quantity) {
-        return new DecimalFormat("0.###", SYMBOLS).format(quantity);
+        return new DecimalFormat("0.######", SYMBOLS).format(quantity);
     }
 }

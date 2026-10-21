@@ -60,6 +60,8 @@
 
     <!-- Suggested recipes screen -->
     <string name="empty_recipes_message">No recipes match your pantry yet—add more ingredients.</string>
+    <string name="empty_recipes_hint_no_pantry">Your pantry is empty. Add what you have on the Pantry tab.</string>
+    <string name="empty_recipes_hint_no_match">Try adding the missing ingredients or larger quantities.</string>
 
     <plurals name="recipes_ready">
         <item quantity="one">%d recipe you can cook right now</item>
