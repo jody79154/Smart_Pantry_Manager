@@ -1,5 +1,6 @@
 package com.example.smartpantry.matching;
 
+import com.example.smartpantry.matching.IngredientConversions.Measure;
 import com.example.smartpantry.matching.UnitConverter.Unit;
 import com.example.smartpantry.model.PantryItem;
 import com.example.smartpantry.model.Recipe;
@@ -48,7 +49,8 @@ public final class RecipeMatcher {
             if (unit == null || name.isEmpty() || ingredient.getQuantity() <= 0) {
                 return false;
             }
-            required.merge(key(name, unit), UnitConverter.toBase(ingredient.getQuantity(), unit), Double::sum);
+            Measure measure = IngredientConversions.toComparable(name, ingredient.getQuantity(), unit);
+            required.merge(measure.getKey(), measure.getAmount(), Double::sum);
         }
 
         for (Map.Entry<String, Double> need : required.entrySet()) {
@@ -71,12 +73,9 @@ public final class RecipeMatcher {
             if (unit == null || name.isEmpty() || item.getQuantity() <= 0) {
                 continue;
             }
-            available.merge(key(name, unit), UnitConverter.toBase(item.getQuantity(), unit), Double::sum);
+            Measure measure = IngredientConversions.toComparable(name, item.getQuantity(), unit);
+            available.merge(measure.getKey(), measure.getAmount(), Double::sum);
         }
         return available;
-    }
-
-    private static String key(String normalizedName, Unit unit) {
-        return normalizedName + "|" + unit.getCategory();
     }
 }
