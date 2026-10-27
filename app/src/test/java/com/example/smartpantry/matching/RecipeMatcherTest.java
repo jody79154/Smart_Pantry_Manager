@@ -235,6 +235,21 @@ public class RecipeMatcherTest {
     }
 
     @Test
+    public void saltInGramsSatisfiesCatalogRecipesThatNeedTeaspoons() {
+        List<PantryItem> items = pantryOf(pantry("egg", 3, "item"), pantry("bread", 2, "item"),
+                pantry("butter", 10, "g"), pantry("salt", 3, "g"));
+        assertTrue(containsName(RecipeMatcher.findMakeable(RecipeCatalog.all(), items), "Scrambled Eggs on Toast"));
+
+        items.set(3, pantry("salt", 2.9, "g"));
+        assertFalse(containsName(RecipeMatcher.findMakeable(RecipeCatalog.all(), items), "Scrambled Eggs on Toast"));
+
+        items.set(3, pantry("salt", 1, "tsp"));
+        assertTrue(containsName(RecipeMatcher.findMakeable(RecipeCatalog.all(), items), "Scrambled Eggs on Toast"));
+        items.set(3, pantry("salt", 0.003, "kg"));
+        assertTrue(containsName(RecipeMatcher.findMakeable(RecipeCatalog.all(), items), "Scrambled Eggs on Toast"));
+    }
+
+    @Test
     public void catalogPancakesAreSuggestedWhenSugarAndOilAreStoredByWeightOrVolume() {
         List<PantryItem> items = pantryOf(pantry("flour", 1, "kg"), pantry("milk", 1, "l"),
                 pantry("egg", 2, "item"), pantry("sugar", 1, "kg"), pantry("vegetable oil", 0.5, "l"));
