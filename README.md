@@ -20,7 +20,7 @@ Food gets thrown away because people forget what is in the cupboard, and recipe 
 - **Pantry list:** a RecyclerView with a custom adapter, an empty-pantry message, edit and delete buttons per row, and a confirmation dialog before deleting.
 - **Form validation:** a blank name, a non-numeric or non-positive quantity, a missing unit and an impossible expiry date are all rejected, with the error shown beside the field.
 - **20 seeded recipes:** created the first time the database is made, never duplicated on later launches.
-- **Suggested Recipes:** runs the strict-matching rule against the current pantry and lists only recipes that can be cooked now. When nothing qualifies it shows "No recipes match your pantry yet—add more ingredients."
+- **Suggested Recipes:** runs the strict-matching rule against the current pantry and lists only recipes that can be cooked now. Expired ingredients are ignored, so a recipe that depends on them disappears from the list, and the screen says how many expired ingredients were left out. When nothing qualifies it shows "No recipes match your pantry yet—add more ingredients."
 - **Recipe Detail:** the full ingredient list and numbered method for a recipe, opened with an Intent that carries the recipe ID.
 - **Settings:** an expiring-soon alerts switch and a 3, 5 or 7 day warning window, stored in SharedPreferences. Warnings appear on the pantry list.
 - **Navigation:** a bottom navigation bar on the three main screens (Pantry, Recipes, Settings).
@@ -106,8 +106,9 @@ The matching rule is the core of the app and lives in `RecipeMatcher`. A recipe 
 1. **Normalise names** (`IngredientNormalizer`): lowercase, trim, collapse spaces, remove punctuation and bracketed notes, singularise the last word (`tomatoes` becomes `tomato`, `berries` becomes `berry`), then apply the alias list below.
 2. **Parse units** (`UnitConverter`) and convert each quantity to a common base amount.
 3. **Convert across unit types where the ingredient is known** (`IngredientConversions`): an ingredient with a known density can be compared by weight whether it was entered in grams, millilitres or spoons, and an ingredient with a known item weight can be compared by weight whether it was entered as a count or as grams.
-4. **Combine** duplicate pantry rows for the same ingredient and the same measure into one total.
-5. **Check every requirement.** A recipe that needs the same ingredient twice has its requirements added together, so it cannot count the pantry twice. A recipe with no ingredients is never suggested. A small tolerance (1e-9) stops rounding errors rejecting an exact amount.
+4. **Skip expired ingredients.** A pantry row whose expiry date is before today is ignored completely. A row that expires today can still be used.
+5. **Combine** duplicate pantry rows for the same ingredient and the same measure into one total.
+6. **Check every requirement.** A recipe that needs the same ingredient twice has its requirements added together, so it cannot count the pantry twice. A recipe with no ingredients is never suggested. A small tolerance (1e-9) stops rounding errors rejecting an exact amount.
 
 ### Recognised units
 
@@ -247,7 +248,7 @@ The repository does not include the Gradle wrapper JAR or the `gradlew` scripts,
 
 ## Testing
 
-The project has 85 local unit tests (JUnit 4) in `app/src/test/java`:
+The project has 93 local unit tests (JUnit 4) in `app/src/test/java`:
 
 | Test class | Covers |
 |---|---|
@@ -270,6 +271,7 @@ The database code, the Activities and the layouts are not covered by automated t
 - [ ] Open Recipes with an empty pantry. The no-match message appears.
 - [ ] Add egg 3 item, bread 2 item, butter 10 g and salt 0.5 tsp. Scrambled Eggs on Toast appears. Delete the salt and it disappears.
 - [ ] Set eggs to 2 and confirm the recipe is not suggested.
+- [ ] Give the salt an expiry date from yesterday. The recipe disappears and the Recipes screen says one expired ingredient is not used. Change the date to today or later and it returns.
 - [ ] Add 1 kg of sugar and check a recipe that needs a tablespoon of it still qualifies.
 - [ ] Change the Settings, fully close the app, reopen it, and confirm they were kept.
 
@@ -281,6 +283,7 @@ The database code, the Activities and the layouts are not covered by automated t
 - Database access runs on the main thread. The data set is small, so this is not noticeable, but it would not scale.
 - `onUpgrade` drops and recreates all tables, so a future schema version would erase pantry data.
 - A delete confirmation dialog closes if the screen is rotated and has to be opened again.
+- Expired ingredients stay in the pantry list until they are deleted; they are only left out of suggestions. This applies even when the expiring-soon alerts switch is off.
 - There are no notifications; expiring-soon warnings appear only inside the app.
 - There is no "Almost There" list, as the project keeps strictly to full matches.
 - There are no instrumented (on-device) tests.
