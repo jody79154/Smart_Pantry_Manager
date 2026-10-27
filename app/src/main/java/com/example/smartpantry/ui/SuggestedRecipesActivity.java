@@ -17,8 +17,10 @@ import com.example.smartpantry.data.RecipeDao;
 import com.example.smartpantry.matching.RecipeMatcher;
 import com.example.smartpantry.model.PantryItem;
 import com.example.smartpantry.model.Recipe;
+import com.example.smartpantry.util.ExpiryHelper;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,10 +72,17 @@ public class SuggestedRecipesActivity extends AppCompatActivity implements Recip
     private void loadSuggestions() {
         List<Recipe> suggested;
         boolean pantryEmpty = true;
+        int expiredCount = 0;
         try {
             List<PantryItem> pantry = pantryDao.getAll();
             pantryEmpty = pantry.isEmpty();
-            suggested = RecipeMatcher.findMakeable(recipeDao.getAll(), pantry);
+            LocalDate today = LocalDate.now();
+            for (PantryItem item : pantry) {
+                if (ExpiryHelper.isExpired(item.getExpiryDate(), today)) {
+                    expiredCount++;
+                }
+            }
+            suggested = RecipeMatcher.findMakeable(recipeDao.getAll(), pantry, today);
         } catch (SQLiteException e) {
             suggested = new ArrayList<>();
             Toast.makeText(this, R.string.error_database, Toast.LENGTH_LONG).show();
@@ -84,10 +93,17 @@ public class SuggestedRecipesActivity extends AppCompatActivity implements Recip
         emptyState.setVisibility(empty ? View.VISIBLE : View.GONE);
         recyclerView.setVisibility(empty ? View.GONE : View.VISIBLE);
         tvSummary.setVisibility(empty ? View.GONE : View.VISIBLE);
-        tvEmptyHint.setText(pantryEmpty ? R.string.empty_recipes_hint_no_pantry : R.string.empty_recipes_hint_no_match);
+        String expiredNote = expiredCount == 0 ? "" : getResources().getQuantityString(
+                R.plurals.expired_not_used, expiredCount, expiredCount);
+        tvEmptyHint.setText(withNote(getString(pantryEmpty
+                ? R.string.empty_recipes_hint_no_pantry : R.string.empty_recipes_hint_no_match), expiredNote));
         if (!empty) {
-            tvSummary.setText(getResources().getQuantityString(
-                    R.plurals.recipes_ready, suggested.size(), suggested.size()));
+            tvSummary.setText(withNote(getResources().getQuantityString(
+                    R.plurals.recipes_ready, suggested.size(), suggested.size()), expiredNote));
         }
+    }
+
+    private String withNote(String text, String note) {
+        return note.isEmpty() ? text : text + "\n" + note;
     }
 }

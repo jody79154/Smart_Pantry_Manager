@@ -5,7 +5,9 @@ import com.example.smartpantry.matching.UnitConverter.Unit;
 import com.example.smartpantry.model.PantryItem;
 import com.example.smartpantry.model.Recipe;
 import com.example.smartpantry.model.RecipeIngredient;
+import com.example.smartpantry.util.ExpiryHelper;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,11 +21,15 @@ public final class RecipeMatcher {
     }
 
     public static List<Recipe> findMakeable(List<Recipe> recipes, List<PantryItem> pantry) {
+        return findMakeable(recipes, pantry, null);
+    }
+
+    public static List<Recipe> findMakeable(List<Recipe> recipes, List<PantryItem> pantry, LocalDate today) {
         List<Recipe> makeable = new ArrayList<>();
         if (recipes == null) {
             return makeable;
         }
-        Map<String, Double> available = buildAvailability(pantry);
+        Map<String, Double> available = buildAvailability(pantry, today);
         for (Recipe recipe : recipes) {
             if (canMake(recipe, available)) {
                 makeable.add(recipe);
@@ -33,7 +39,11 @@ public final class RecipeMatcher {
     }
 
     public static boolean canMake(Recipe recipe, List<PantryItem> pantry) {
-        return canMake(recipe, buildAvailability(pantry));
+        return canMake(recipe, pantry, null);
+    }
+
+    public static boolean canMake(Recipe recipe, List<PantryItem> pantry, LocalDate today) {
+        return canMake(recipe, buildAvailability(pantry, today));
     }
 
     private static boolean canMake(Recipe recipe, Map<String, Double> available) {
@@ -62,12 +72,15 @@ public final class RecipeMatcher {
         return true;
     }
 
-    private static Map<String, Double> buildAvailability(List<PantryItem> pantry) {
+    private static Map<String, Double> buildAvailability(List<PantryItem> pantry, LocalDate today) {
         Map<String, Double> available = new HashMap<>();
         if (pantry == null) {
             return available;
         }
         for (PantryItem item : pantry) {
+            if (today != null && ExpiryHelper.isExpired(item.getExpiryDate(), today)) {
+                continue;
+            }
             Unit unit = UnitConverter.parse(item.getUnit());
             String name = IngredientNormalizer.normalize(item.getName());
             if (unit == null || name.isEmpty() || item.getQuantity() <= 0) {

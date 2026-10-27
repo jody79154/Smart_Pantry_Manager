@@ -41,6 +41,16 @@ public class ExpiryHelperTest {
     }
 
     @Test
+    public void isExpiredIsTrueOnlyForDatesBeforeToday() {
+        assertEquals(true, ExpiryHelper.isExpired("2026-10-16", TODAY));
+        assertEquals(false, ExpiryHelper.isExpired("2026-10-17", TODAY));
+        assertEquals(false, ExpiryHelper.isExpired("2026-10-18", TODAY));
+        assertEquals(false, ExpiryHelper.isExpired(null, TODAY));
+        assertEquals(false, ExpiryHelper.isExpired("", TODAY));
+        assertEquals(false, ExpiryHelper.isExpired("garbage", TODAY));
+    }
+
+    @Test
     public void pastDatesAreExpired() {
         assertEquals(Status.EXPIRED, ExpiryHelper.statusOf("2026-10-16", TODAY, 3));
         assertEquals(Status.EXPIRED, ExpiryHelper.statusOf("2020-01-01", TODAY, 7));

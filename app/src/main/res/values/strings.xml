@@ -72,6 +72,11 @@
         <item quantity="other">%d ingredients</item>
     </plurals>
 
+    <plurals name="expired_not_used">
+        <item quantity="one">%d expired ingredient is not used for suggestions.</item>
+        <item quantity="other">%d expired ingredients are not used for suggestions.</item>
+    </plurals>
+
     <!-- Recipe detail screen -->
     <string name="recipe_missing">That recipe could not be found</string>
     <string name="label_ingredients">Ingredients</string>

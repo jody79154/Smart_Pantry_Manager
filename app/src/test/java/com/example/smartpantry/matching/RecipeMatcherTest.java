@@ -11,6 +11,7 @@ import com.example.smartpantry.model.RecipeIngredient;
 
 import org.junit.Test;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -19,6 +20,10 @@ public class RecipeMatcherTest {
 
     private static PantryItem pantry(String name, double quantity, String unit) {
         return new PantryItem(0, name, quantity, unit, null);
+    }
+
+    private static PantryItem pantry(String name, double quantity, String unit, String expiryDate) {
+        return new PantryItem(0, name, quantity, unit, expiryDate);
     }
 
     private static RecipeIngredient need(String name, double quantity, String unit) {
@@ -232,6 +237,62 @@ public class RecipeMatcherTest {
         assertTrue(RecipeMatcher.canMake(sweetTea, pantryOf(pantry("sugar", 1, "kg"))));
         assertTrue(RecipeMatcher.canMake(sweetTea, pantryOf(pantry("sugar", 13, "g"))));
         assertFalse(RecipeMatcher.canMake(sweetTea, pantryOf(pantry("sugar", 12, "g"))));
+    }
+
+    private static final LocalDate TODAY = LocalDate.of(2026, 10, 28);
+
+    private static List<PantryItem> eggsOnToastPantry(String saltExpiry) {
+        return pantryOf(pantry("egg", 3, "item"), pantry("bread", 2, "item"),
+                pantry("butter", 10, "g"), pantry("salt", 1, "tsp", saltExpiry));
+    }
+
+    @Test
+    public void expiredIngredientRemovesTheRecipesThatNeedIt() {
+        assertFalse(containsName(RecipeMatcher.findMakeable(RecipeCatalog.all(),
+                eggsOnToastPantry("2026-10-27"), TODAY), "Scrambled Eggs on Toast"));
+        assertFalse(containsName(RecipeMatcher.findMakeable(RecipeCatalog.all(),
+                eggsOnToastPantry("2020-01-01"), TODAY), "Scrambled Eggs on Toast"));
+    }
+
+    @Test
+    public void ingredientsThatAreNotExpiredAreStillUsed() {
+        assertTrue(containsName(RecipeMatcher.findMakeable(RecipeCatalog.all(),
+                eggsOnToastPantry("2026-10-28"), TODAY), "Scrambled Eggs on Toast"));
+        assertTrue(containsName(RecipeMatcher.findMakeable(RecipeCatalog.all(),
+                eggsOnToastPantry("2026-10-29"), TODAY), "Scrambled Eggs on Toast"));
+        assertTrue(containsName(RecipeMatcher.findMakeable(RecipeCatalog.all(),
+                eggsOnToastPantry(null), TODAY), "Scrambled Eggs on Toast"));
+    }
+
+    @Test
+    public void onlyTheFreshRowsOfAnIngredientCount() {
+        Recipe bread = recipe("Bread", need("flour", 200, "g"));
+        assertFalse(RecipeMatcher.canMake(bread,
+                pantryOf(pantry("flour", 100, "g", "2026-12-01"), pantry("flour", 500, "g", "2026-10-01")), TODAY));
+        assertTrue(RecipeMatcher.canMake(bread,
+                pantryOf(pantry("flour", 250, "g", "2026-12-01"), pantry("flour", 500, "g", "2026-10-01")), TODAY));
+        assertTrue(RecipeMatcher.canMake(bread,
+                pantryOf(pantry("flour", 100, "g", "2026-12-01"), pantry("flour", 100, "g")), TODAY));
+    }
+
+    @Test
+    public void recipeComesBackWhenAFreshReplacementIsAdded() {
+        List<PantryItem> items = eggsOnToastPantry("2026-10-20");
+        assertFalse(containsName(RecipeMatcher.findMakeable(RecipeCatalog.all(), items, TODAY), "Scrambled Eggs on Toast"));
+        items.add(pantry("salt", 1, "tsp", "2027-06-01"));
+        assertTrue(containsName(RecipeMatcher.findMakeable(RecipeCatalog.all(), items, TODAY), "Scrambled Eggs on Toast"));
+    }
+
+    @Test
+    public void expiryIsIgnoredWhenNoDateIsGiven() {
+        assertTrue(containsName(RecipeMatcher.findMakeable(RecipeCatalog.all(),
+                eggsOnToastPantry("2020-01-01")), "Scrambled Eggs on Toast"));
+    }
+
+    @Test
+    public void unreadableExpiryDatesAreNotTreatedAsExpired() {
+        assertTrue(containsName(RecipeMatcher.findMakeable(RecipeCatalog.all(),
+                eggsOnToastPantry("not a date"), TODAY), "Scrambled Eggs on Toast"));
     }
 
     @Test

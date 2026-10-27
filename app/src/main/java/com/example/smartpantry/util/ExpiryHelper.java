@@ -27,6 +27,11 @@ public final class ExpiryHelper {
         }
     }
 
+    public static boolean isExpired(String isoDate, LocalDate today) {
+        Integer days = daysUntil(isoDate, today);
+        return days != null && days < 0;
+    }
+
     public static Status statusOf(String isoDate, LocalDate today, int warningDays) {
         Integer days = daysUntil(isoDate, today);
         if (days == null) {
